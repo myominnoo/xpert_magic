@@ -118,6 +118,7 @@ body <- mainPanel(
 # ui all ------------------------------------------------------------------
 
 ui <- fluidPage(
+  title = "Xpert Magic", 
   theme = bs_theme(version = 5), 
   br(), 
   sidebarLayout(sidebar, body)
