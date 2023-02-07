@@ -6,6 +6,8 @@ library(DT)
 library(tidyverse)
 
 
+options(shiny.maxRequestSize = 30*1024^2)
+
 # functions ---------------------------------------------------------------
 
 process_raw <- function(raw, include) {
@@ -24,55 +26,54 @@ process_raw <- function(raw, include) {
   ## if prt is not a list, convert it to a list
   if (!is.list(prt))
     prt <- list(prt)
-  
-  
-  ## run a loop to process individual RESULT TABLE `irt`
-  irt <- lapply(prt, function(x) {
-    t <- raw[x]
-    t <- t[grepl(texts_included, t)]
-    t <- t[1:30]
-    
+ 
+  	## run a loop to process individual RESULT TABLE `irt`
+  	irt <- lapply(prt, function(x) {
+  		t <- raw[x]
+  		t <- t[grepl(texts_included, t)]
+  		t <- t[1:30]
+  		t <- t[!is.na(t)]
     pid <- unlist(strsplit(t[grepl("Patient ID,", t)], ","))[2]
     type <- unlist(strsplit(t[grepl("Sample Type,", t)], ","))[2]
     sttime <- unlist(strsplit(t[grepl("Start Time,", t)], ","))[2]
     sttime <- unlist(strsplit(sttime, " "))[1]
-    
-    analyte <- c("Analyte Name,", "HPV 16,", "HPV 18_45,", 
+
+    analyte <- c("Analyte Name,", "HPV 16,", "HPV 18_45,",
                  "P3,", "P4,", "P5,", "SAC,")
     analyte <- paste0(analyte, collapse = "|")
     analyte <- t(do.call(rbind, strsplit(t[grepl(analyte, t)], ",")))
-    
+
     pos <- any(analyte[4, 2:7] %in% "POS")
-    
+
     ct_val <- which(analyte[, 1] == "Ct")[1]
-    
-    res <- cbind(start_time = sttime,  
+
+    res <- cbind(start_time = sttime,
                  PID = pid)
-    
-    if (include == "type") 
-      res <- cbind(res, type = type) 
-    res <- cbind(res, 
+
+    if (include == "type")
+      res <- cbind(res, type = type)
+    res <- cbind(res,
                  result = ifelse(pos, "Positive", "Negative"),
-                 ct_hpv_16 = analyte[ct_val, which(analyte[1, ] == "HPV 16")[1]], 
+                 ct_hpv_16 = analyte[ct_val, which(analyte[1, ] == "HPV 16")[1]],
                  ct_hpv_18_45 = analyte[ct_val, which(analyte[1, ] == "HPV 18_45")[1]],
-                 ct_p3 = analyte[ct_val, which(analyte[1, ] == "P3")[1]], 
-                 ct_p4 = analyte[ct_val, which(analyte[1, ] == "P4")[1]], 
+                 ct_p3 = analyte[ct_val, which(analyte[1, ] == "P3")[1]],
+                 ct_p4 = analyte[ct_val, which(analyte[1, ] == "P4")[1]],
                  ct_p5 = analyte[ct_val, which(analyte[1, ] == "P5")[1]],
                  ct_sac = analyte[ct_val, which(analyte[1, ] == "SAC")[1]])
     if (ncol(res) %in% 9:10)
       data.frame(res)
   })
-  
+
   eligible <- (sapply(irt, is.null))
   cat("\n ***** Removing", sum(eligible), "non-HPV resuts *****\n")
   irt <- irt[!eligible]
-  
+
   ## combine all results into one table
   output <- do.call(rbind, irt)
-  output <- output %>% 
+  output <- output %>%
     mutate(across(ct_hpv_16:ct_sac, ~ as.numeric(.x)))
   # output[, -c(1:4)] <- apply(output[, -c(1:4)], 2, as.numeric)
-  
+
   # https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4355361/
   output$vl_hpv_16 <- output$ct_hpv_16 / (output$ct_sac / 2)
   output$vl_hpv_18_45 <- output$ct_hpv_18_45 / (output$ct_sac / 2)
@@ -82,7 +83,7 @@ process_raw <- function(raw, include) {
   names(output)
   output[is.na(output) | sapply(output, is.nan)] <- 0
   output[which(output$result == "Negative"), c(
-    "vl_hpv_16", "vl_hpv_18_45", "vl_hpv_p3", "vl_hpv_p4", "vl_hpv_p5" 
+    "vl_hpv_16", "vl_hpv_18_45", "vl_hpv_p3", "vl_hpv_p4", "vl_hpv_p5"
   )] <- 0
   output
 }

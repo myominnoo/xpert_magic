@@ -1,0 +1,14 @@
+name: xpert_magic
+title: xpert_magic
+username:
+account: myominnoo
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 7672026
+bundleId: 6815849
+url: https://myominnoo.shinyapps.io/xpert_magic/
+when: 1675701958.90084
+lastSyncTime: 1675701958.90085
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: README.md|Xpert H 230522144713_2022.05.23_14.48.064.csv|Xpert H 230522144713_2022.05.23_14.48.06JKHK.csv|Xpert Raw.csv|xpert_magic_v1.R|xpert_magic_v2.R|xpert_magic_v3.R|xpert_magic_v4.R|xpert_magic_v5.R
